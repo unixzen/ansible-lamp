@@ -1,0 +1,71 @@
+---
+
+- name: Add aptkey 
+  apt_key: 
+    url: "https://nginx.org/keys/nginx_signing.key" 
+    state: present
+
+- name: Add repository 
+  apt_repository:
+    repo: "{{item}} http://nginx.org/packages/debian/ stretch nginx" 
+    state: present
+    update_cache: yes
+  with_items:
+    - deb
+    - deb-src
+
+- name: Install nginx
+  apt:
+    name: nginx
+    state: latest
+
+- name: Create folders
+  file: 
+    path: "{{ item.path }}"
+    mode: "{{ item.mode }}"
+    state: directory
+    owner: "{{ item.user }}"
+    group: "{{ item.group }}"
+  with_items:
+  #-{path:"/etc/nginx/sites-available",mode:755,user:root,group:root}
+    - { path: "/etc/nginx/sites-enabled", mode: "755", user: "root", group: "root" }
+
+- name: Copy nginx.conf
+  template:
+    src: nginx.conf
+    dest: /etc/nginx/nginx.conf
+
+- name: nginx add sites-enabled
+  lineinfile:
+    dest: /etc/nginx/nginx.conf
+    line: "include /etc/nginx/sites-enabled/*;"
+    insertafter: "http {"
+    state: present
+  notify:
+  - restart nginx
+
+- name: nginx add sites-enabled
+  lineinfile:
+    dest: /etc/nginx/nginx.conf
+    line: "reset_timedout_connection on;"
+    insertafter: "http {"
+    state: present
+  notify:
+  - restart nginx
+
+- name: Copy new virtual hosts file test1.
+  template:
+    src: test1.local.conf
+    dest: /etc/nginx/sites-enabled/test1.local.conf
+
+- name: Copy new virtual hosts file test2.
+  template:
+   src: test2.local.conf
+   dest: /etc/nginx/sites-enabled/test2.local.conf
+
+- name: Start Nginx and enable the service in autostart
+  service:
+    name: nginx
+    state: started
+    enabled: yes
+

@@ -1,0 +1,84 @@
+---
+
+- name: Add dotdeb apt key
+  apt_key: 
+    url: "https://www.dotdeb.org/dotdeb.gpg" 
+    state: present
+    
+- name: Add apt dot repository for Debian
+  apt_repository: 
+    repo: "{{ item }} http://packages.dotdeb.org/ stable all"
+    state: present 
+    update_cache: yes
+  with_items:
+    - deb
+    - deb-src
+
+- name: Install apache webserver
+  apt: name={{ item }} state=latest
+  with_items:
+    - apache2
+    - libapache2-mpm-itk
+
+- name: Enable apache2 modules
+  apache2_module:
+    state: "{{ item.state }}"
+    name: "{{ item.name }}"
+  with_items:
+    - { state: present, name: mpm_itk }
+        
+- name: apache2 listen on port 8081
+  lineinfile: dest=/etc/apache2/ports.conf regexp="^Listen 80" line="Listen 8081" state=present
+  notify:
+    - restart apache2
+        
+- name: apache2 virtualhost on port 8081
+  lineinfile: dest=/etc/apache2/sites-available/000-default.conf regexp="^<VirtualHost \*:80>" line="<VirtualHost *:8081>" state=present
+  notify:
+    - restart apache2
+        
+- name: add group test1
+  group:
+    name: test1
+    state: present
+       
+- name: add group test2
+  group:
+    name: test2
+    state: present
+        
+- name: add user test1
+  user:
+    name: test1
+    uid: 10001
+    shell: /usr/sbin/nologin
+    group: test1
+        
+- name: add user test2
+  user:
+    name: test2
+    uid: 10002
+    shell: /usr/sbin/nologin
+    group: test2
+        
+- name: Create folders
+  file: path={{ item.path }} mode={{ item.mode }} state=directory owner={{ item.user }} group={{ item.group }}
+  with_items:
+    - { path: "/var/www/test1.local", mode: "750", user: "test1", group: "test1" }
+    - { path: "/var/www/test2.local", mode: "750", user: "test2", group: "test2" }
+        
+- name: absent default virtualhost
+  file:
+    path: /etc/apache2/sites-enabled/000-default.conf
+    state: absent
+        
+- name: create virtualhost test1 file and test php
+  template: src=test1.local.conf dest=/etc/apache2/sites-enabled/test1.local.conf
+    
+- name: create virtualhost test2 file and test php
+  template: src=test2.local.conf dest=/etc/apache2/sites-enabled/test2.local.conf
+       
+- name: restart apache2
+  service: name=apache2 state=restarted
+
+

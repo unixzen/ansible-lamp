@@ -1,0 +1,42 @@
+---
+
+- name: Install unzip utility
+  apt:
+    name: unzip
+    state: present
+
+- name: Enable mod for apache2
+  command: a2enmod {{item}}
+  with_items:
+    - rewrite
+    - suexec
+    - include
+    - headers
+    - proxy
+    - proxy_http
+
+- name: Download Joomla
+  get_url: 
+    url: "https://downloads.joomla.org/cms/joomla3/3-8-3/Joomla_3-8-3-Stable-Full_Package.zip?format=zip" 
+    dest: "~/joomla.zip" 
+    force: "yes"
+
+- name: Unarchive Joomla test1
+  unarchive: 
+    copy: no 
+    src: "~/joomla.zip" 
+    dest: "/var/www/test1.local" 
+    owner: "test1" 
+    group: "test1"
+    mode: 0770
+
+- name: Unarchive Joomla test2
+  unarchive: 
+    copy: no 
+    src: "~/joomla.zip" 
+    dest: "/var/www/test2.local" 
+    owner: "test2" 
+    group: "test2" 
+    mode: 0770
+
+

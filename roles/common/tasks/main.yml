@@ -1,0 +1,11 @@
+- name: Install vagrant from .deb
+  apt:
+    deb: https://releases.hashicorp.com/vagrant/2.0.1/vagrant_2.0.1_x86_64.deb?_ga=2.92637021.1702425894.1514492227-94734099.1513409650
+
+- name: Install plugin vagrant provider digitalocean
+  shell: vagrant plugin install vagrant-digitalocean
+
+- name: Start vagrant vm
+  shell: vagrant up --provider=digital_ocean
+
+

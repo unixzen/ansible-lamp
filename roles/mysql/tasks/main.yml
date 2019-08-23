@@ -1,0 +1,31 @@
+- name: Install mysql-apt-config from .deb
+  apt:
+    deb: https://dev.mysql.com/get/mysql-apt-config_0.8.9-1_all.deb
+    force: yes
+
+- name: Install mysql-server
+  apt:
+    name: mysql-server
+    force: yes
+    state: present
+    update_cache: true
+
+- name: Install python module for mysql
+  apt:  
+    name: python-mysqldb
+    state: installed
+
+- name: User Create test1
+  mysql_user: name=test1 host=% password=test1 priv=*.*:ALL state=present
+
+- name: User Create test2
+  mysql_user: name=test2 host=% password=test2 priv=*.*:ALL state=present
+
+- name: Add param max_connection at config
+  lineinfile: 
+    path: /etc/mysql/conf.d/mysql.cnf 
+    line: "max_connections = 700" 
+    state: present
+  notify:
+   - restart mysql
+
